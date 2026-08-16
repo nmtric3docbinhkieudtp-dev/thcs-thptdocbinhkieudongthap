@@ -142,7 +142,7 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                 <input 
                   type="number" 
                   value={reportForm.academicStats?.excellent || ''} 
-                  onChange={(e) => onFormChange({...reportForm, academicStats: {...reportForm.academicStats, excellent: parseInt(e.target.value) || 0}})}
+                  onChange={(e) => onFormChange({...reportForm, academicStats: {...{excellent: 0, good: 0, satisfactory: 0}, ...reportForm.academicStats, excellent: parseInt(e.target.value) || 0}})}
                 />
               </div>
               <div className="form-group">
@@ -150,7 +150,7 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                 <input 
                   type="number" 
                   value={reportForm.academicStats?.good || ''} 
-                  onChange={(e) => onFormChange({...reportForm, academicStats: {...reportForm.academicStats, good: parseInt(e.target.value) || 0}})}
+                  onChange={(e) => onFormChange({...reportForm, academicStats: {...{excellent: 0, good: 0, satisfactory: 0}, ...reportForm.academicStats, good: parseInt(e.target.value) || 0}})}
                 />
               </div>
               <div className="form-group">
@@ -158,7 +158,7 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                 <input 
                   type="number" 
                   value={reportForm.academicStats?.satisfactory || ''} 
-                  onChange={(e) => onFormChange({...reportForm, academicStats: {...reportForm.academicStats, satisfactory: parseInt(e.target.value) || 0}})}
+                  onChange={(e) => onFormChange({...reportForm, academicStats: {...{excellent: 0, good: 0, satisfactory: 0}, ...reportForm.academicStats, satisfactory: parseInt(e.target.value) || 0}})}
                 />
               </div>
             </div>
@@ -172,7 +172,7 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                 <input 
                   type="number" 
                   value={reportForm.conductStats?.excellent || ''} 
-                  onChange={(e) => onFormChange({...reportForm, conductStats: {...reportForm.conductStats, excellent: parseInt(e.target.value) || 0}})}
+                  onChange={(e) => onFormChange({...reportForm, conductStats: {...{excellent: 0, good: 0, satisfactory: 0}, ...reportForm.conductStats, excellent: parseInt(e.target.value) || 0}})}
                 />
               </div>
               <div className="form-group">
@@ -180,7 +180,7 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                 <input 
                   type="number" 
                   value={reportForm.conductStats?.good || ''} 
-                  onChange={(e) => onFormChange({...reportForm, conductStats: {...reportForm.conductStats, good: parseInt(e.target.value) || 0}})}
+                  onChange={(e) => onFormChange({...reportForm, conductStats: {...{excellent: 0, good: 0, satisfactory: 0}, ...reportForm.conductStats, good: parseInt(e.target.value) || 0}})}
                 />
               </div>
               <div className="form-group">
@@ -188,7 +188,7 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                 <input 
                   type="number" 
                   value={reportForm.conductStats?.satisfactory || ''} 
-                  onChange={(e) => onFormChange({...reportForm, conductStats: {...reportForm.conductStats, satisfactory: parseInt(e.target.value) || 0}})}
+                  onChange={(e) => onFormChange({...reportForm, conductStats: {...{excellent: 0, good: 0, satisfactory: 0}, ...reportForm.conductStats, satisfactory: parseInt(e.target.value) || 0}})}
                 />
               </div>
             </div>

@@ -1,5 +1,5 @@
 interface PersonnelRecord {
-  id: string;
+  id: number;
   name: string;
   position: string;
   department: string;

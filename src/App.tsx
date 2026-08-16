@@ -7,6 +7,7 @@ import {
   isFirebaseConfigured,
 } from './firebase';
 import { ReportPage } from './components/Reports/ReportPage';
+import { DEFAULT_PASSWORD, findAccountByEmail, type AuthorizedAccount } from './accounts';
 import { PersonnelView } from './components/Personnel/PersonnelView';
 
 type UserRole = 'member' | 'admin';
@@ -15,11 +16,12 @@ type ViewMode = 'overview' | 'personnel' | 'reports';
 type AppUser = {
   id: string;
   email: string;
+  name?: string;
   role: UserRole;
   demo?: boolean;
 };
 
-type AuthSession = {
+export type AuthSession = {
   access_token: string;
   refresh_token: string;
   user: AppUser;
@@ -74,7 +76,7 @@ type AbsentStudent = {
   reason: string;
 };
 
-type ReportSubmission = {
+export type ReportSubmission = {
   id: string;
   submittedAt: string;
   gcvnName: string;
@@ -330,11 +332,12 @@ function exportReportsAsJSON(): void {
   URL.revokeObjectURL(url);
 }
 
-function buildDemoSession(email: string): AuthSession {
+function buildLocalSession(account: AuthorizedAccount): AuthSession {
   const demoUser: AppUser = {
     id: getDemoId(),
-    email,
-    role: 'member',
+    email: account.email,
+    name: account.name,
+    role: account.role,
     demo: true,
   };
 
@@ -349,36 +352,54 @@ function buildDemoSession(email: string): AuthSession {
 }
 
 async function signInWithFirebase(email: string, password: string): Promise<AuthSession> {
-  if (!isFirebaseConfigured || !auth) {
-    return buildDemoSession(email);
+  const account = findAccountByEmail(email);
+  if (!account) {
+    throw new Error('Email này chưa được cấp tài khoản. Vui lòng liên hệ quản trị viên (Thầy Nguyễn Minh Trí).');
   }
 
-  const user = await firebaseSignIn(email, password);
+  if (!isFirebaseConfigured || !auth) {
+    if (password !== DEFAULT_PASSWORD) {
+      throw new Error('Mật khẩu không đúng. Vui lòng thử lại.');
+    }
+    return buildLocalSession(account);
+  }
+
+  const user = await firebaseSignIn(account.email, password);
   return {
     access_token: user.uid,
     refresh_token: user.refreshToken,
     user: {
       id: user.uid,
-      email: user.email ?? email,
-      role: 'member',
+      email: user.email ?? account.email,
+      name: account.name,
+      role: account.role,
       demo: false,
     },
   };
 }
 
 async function signUpWithFirebase(email: string, password: string): Promise<AuthSession> {
-  if (!isFirebaseConfigured || !auth) {
-    return buildDemoSession(email);
+  const account = findAccountByEmail(email);
+  if (!account) {
+    throw new Error('Email này chưa được cấp tài khoản. Vui lòng liên hệ quản trị viên (Thầy Nguyễn Minh Trí).');
   }
 
-  const user = await firebaseSignUp(email, password);
+  if (!isFirebaseConfigured || !auth) {
+    if (password !== DEFAULT_PASSWORD) {
+      throw new Error('Mật khẩu không đúng. Vui lòng thử lại.');
+    }
+    return buildLocalSession(account);
+  }
+
+  const user = await firebaseSignUp(account.email, password);
   return {
     access_token: user.uid,
     refresh_token: user.refreshToken,
     user: {
       id: user.uid,
-      email: user.email ?? email,
-      role: 'member',
+      email: user.email ?? account.email,
+      name: account.name,
+      role: account.role,
       demo: false,
     },
   };
@@ -386,8 +407,8 @@ async function signUpWithFirebase(email: string, password: string): Promise<Auth
 
 function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('demo@dbk.edu.vn');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [session, setSession] = useState<AuthSession | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -669,7 +690,7 @@ function App() {
                 <h1>Dashboard trường THCS-THPT Đốc Binh Kiều</h1>
               </div>
               <div className="top-actions">
-                <span className="user-pill">{session.user.role === 'admin' ? 'Quản trị' : 'Thành viên'} · {session.user.email}</span>
+                <span className="user-pill">{session.user.role === 'admin' ? 'Quản trị' : 'Thành viên'} · {session.user.name ?? session.user.email}</span>
                 <button type="button" className="ghost-btn" onClick={handleLogout}>Đăng xuất</button>
                 <button type="button" className="primary-btn small">+ Thêm báo cáo</button>
               </div>
