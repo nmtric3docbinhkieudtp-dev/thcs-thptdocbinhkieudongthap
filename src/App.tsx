@@ -19,7 +19,7 @@ type AppUser = {
   demo?: boolean;
 };
 
-type AuthSession = {
+export type AuthSession = {
   access_token: string;
   refresh_token: string;
   user: AppUser;
@@ -31,8 +31,8 @@ type NavItem = {
   badge?: string;
 };
 
-type PersonnelRecord = {
-  id: number;
+export type PersonnelRecord = {
+  id: string | number;
   name: string;
   position: string;
   unit: string;
@@ -74,7 +74,7 @@ type AbsentStudent = {
   reason: string;
 };
 
-type ReportSubmission = {
+export type ReportSubmission = {
   id: string;
   submittedAt: string;
   gcvnName: string;

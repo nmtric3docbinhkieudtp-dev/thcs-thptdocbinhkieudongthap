@@ -9,6 +9,9 @@ interface ReportFormProps {
 }
 
 export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: ReportFormProps) {
+  const currentAcademicStats = reportForm.academicStats ?? { excellent: 0, good: 0, satisfactory: 0 };
+  const currentConductStats = reportForm.conductStats ?? { excellent: 0, good: 0, satisfactory: 0 };
+
   return (
     <div className="report-form-wrapper">
       <form className="report-form" onSubmit={onSubmit}>
@@ -141,24 +144,24 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                 <label>Tốt</label>
                 <input 
                   type="number" 
-                  value={reportForm.academicStats?.excellent || ''} 
-                  onChange={(e) => onFormChange({...reportForm, academicStats: {...reportForm.academicStats, excellent: parseInt(e.target.value) || 0}})}
+                  value={currentAcademicStats.excellent} 
+                  onChange={(e) => onFormChange({...reportForm, academicStats: { ...currentAcademicStats, excellent: parseInt(e.target.value) || 0 }})}
                 />
               </div>
               <div className="form-group">
                 <label>Khá</label>
                 <input 
                   type="number" 
-                  value={reportForm.academicStats?.good || ''} 
-                  onChange={(e) => onFormChange({...reportForm, academicStats: {...reportForm.academicStats, good: parseInt(e.target.value) || 0}})}
+                  value={currentAcademicStats.good} 
+                  onChange={(e) => onFormChange({...reportForm, academicStats: { ...currentAcademicStats, good: parseInt(e.target.value) || 0 }})}
                 />
               </div>
               <div className="form-group">
                 <label>Đạt</label>
                 <input 
                   type="number" 
-                  value={reportForm.academicStats?.satisfactory || ''} 
-                  onChange={(e) => onFormChange({...reportForm, academicStats: {...reportForm.academicStats, satisfactory: parseInt(e.target.value) || 0}})}
+                  value={currentAcademicStats.satisfactory} 
+                  onChange={(e) => onFormChange({...reportForm, academicStats: { ...currentAcademicStats, satisfactory: parseInt(e.target.value) || 0 }})}
                 />
               </div>
             </div>
@@ -171,24 +174,24 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                 <label>Tốt</label>
                 <input 
                   type="number" 
-                  value={reportForm.conductStats?.excellent || ''} 
-                  onChange={(e) => onFormChange({...reportForm, conductStats: {...reportForm.conductStats, excellent: parseInt(e.target.value) || 0}})}
+                  value={currentConductStats.excellent} 
+                  onChange={(e) => onFormChange({...reportForm, conductStats: { ...currentConductStats, excellent: parseInt(e.target.value) || 0 }})}
                 />
               </div>
               <div className="form-group">
                 <label>Khá</label>
                 <input 
                   type="number" 
-                  value={reportForm.conductStats?.good || ''} 
-                  onChange={(e) => onFormChange({...reportForm, conductStats: {...reportForm.conductStats, good: parseInt(e.target.value) || 0}})}
+                  value={currentConductStats.good} 
+                  onChange={(e) => onFormChange({...reportForm, conductStats: { ...currentConductStats, good: parseInt(e.target.value) || 0 }})}
                 />
               </div>
               <div className="form-group">
                 <label>Đạt</label>
                 <input 
                   type="number" 
-                  value={reportForm.conductStats?.satisfactory || ''} 
-                  onChange={(e) => onFormChange({...reportForm, conductStats: {...reportForm.conductStats, satisfactory: parseInt(e.target.value) || 0}})}
+                  value={currentConductStats.satisfactory} 
+                  onChange={(e) => onFormChange({...reportForm, conductStats: { ...currentConductStats, satisfactory: parseInt(e.target.value) || 0 }})}
                 />
               </div>
             </div>
