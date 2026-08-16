@@ -6,9 +6,11 @@ import {
   firebaseSignUp,
   isFirebaseConfigured,
 } from './firebase';
+import { ReportPage } from './components/Reports/ReportPage';
+import { PersonnelView } from './components/Personnel/PersonnelView';
 
 type UserRole = 'member' | 'admin';
-type ViewMode = 'overview' | 'personnel';
+type ViewMode = 'overview' | 'personnel' | 'reports';
 
 type AppUser = {
   id: string;
@@ -41,14 +43,73 @@ type PersonnelRecord = {
   status: 'Hoạt động' | 'Chờ duyệt' | 'Nghỉ phép';
 };
 
+type ClassPosition = {
+  title: string;
+  name: string;
+  grade: string;
+  conduct: string;
+  phone: string;
+};
+
+type PrizeEntry = {
+  competition: string;
+  prize: string;
+  studentNames: string;
+};
+
+type FacilityItem = {
+  name: string;
+  quantity: number;
+  unit: string;
+  condition: string;
+  notes: string;
+};
+
+type AbsentStudent = {
+  name: string;
+  prevClass: string;
+  address: string;
+  studentPhone: string;
+  parentPhone: string;
+  reason: string;
+};
+
+type ReportSubmission = {
+  id: string;
+  submittedAt: string;
+  gcvnName: string;
+  gcvnEmail: string;
+  className: string;
+  meetingTime: string;
+  meetingDate: string;
+  meetingLocation: string;
+  totalStudents: number;
+  maleStudents: number;
+  femaleStudents: number;
+  presentStudents: number;
+  presentMale: number;
+  presentFemale: number;
+  absentStudents: number;
+  academicStats: { excellent: number; good: number; satisfactory: number };
+  conductStats: { excellent: number; good: number; satisfactory: number };
+  partyMembers: number;
+  locationStats: Record<string, number>;
+  prizeEntries: PrizeEntry[];
+  classPositions: ClassPosition[];
+  facilities: FacilityItem[];
+  assentStudentList: AbsentStudent[];
+  gcvnOpinion: string;
+};
+
 const STORAGE_KEY = 'dbk-auth-session';
+const REPORTS_STORAGE_KEY = 'dbk-report-submissions';
 
 const TOTAL_PERSONNEL = 120;
 
 const navItems: NavItem[] = [
   { label: 'Tổng quan', view: 'overview' },
   { label: 'Nhân sự', view: 'personnel', badge: String(TOTAL_PERSONNEL) },
-  { label: 'Báo cáo', view: 'overview', badge: '12' },
+  { label: 'Báo cáo', view: 'reports', badge: '1' },
   { label: 'Tài liệu', view: 'overview', badge: '9' },
   { label: 'Cài đặt', view: 'overview' },
 ];
@@ -237,6 +298,38 @@ function clearSession() {
   window.localStorage.removeItem(STORAGE_KEY);
 }
 
+function readStoredReports(): ReportSubmission[] {
+  try {
+    const reportsText = window.localStorage.getItem(REPORTS_STORAGE_KEY);
+    return reportsText ? (JSON.parse(reportsText) as ReportSubmission[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveReport(report: ReportSubmission) {
+  const reports = readStoredReports();
+  const existingIndex = reports.findIndex((r) => r.id === report.id);
+  if (existingIndex >= 0) {
+    reports[existingIndex] = report;
+  } else {
+    reports.push(report);
+  }
+  window.localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
+}
+
+function exportReportsAsJSON(): void {
+  const reports = readStoredReports();
+  const dataStr = JSON.stringify(reports, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `bao_cao_tap_trung_hs_${new Date().toISOString().split('T')[0]}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function buildDemoSession(email: string): AuthSession {
   const demoUser: AppUser = {
     id: getDemoId(),
@@ -300,12 +393,44 @@ function App() {
   const [authError, setAuthError] = useState('');
   const [view, setView] = useState<ViewMode>('overview');
   const [searchTerm, setSearchTerm] = useState('');
+  const [reportMode, setReportMode] = useState<'select' | 'form' | 'view'>('select');
+  const [allReports, setAllReports] = useState<ReportSubmission[]>([]);
+  
+  // Report form state
+  const [reportForm, setReportForm] = useState<Partial<ReportSubmission>>({
+    id: '',
+    submittedAt: new Date().toISOString(),
+    gcvnName: '',
+    gcvnEmail: session?.user.email || '',
+    className: '',
+    meetingTime: '',
+    meetingDate: '03/9/2026',
+    meetingLocation: '',
+    totalStudents: 0,
+    maleStudents: 0,
+    femaleStudents: 0,
+    presentStudents: 0,
+    presentMale: 0,
+    presentFemale: 0,
+    absentStudents: 0,
+    academicStats: { excellent: 0, good: 0, satisfactory: 0 },
+    conductStats: { excellent: 0, good: 0, satisfactory: 0 },
+    partyMembers: 0,
+    locationStats: {},
+    prizeEntries: [],
+    classPositions: [],
+    facilities: [],
+    assentStudentList: [],
+    gcvnOpinion: '',
+  });
 
   useEffect(() => {
     const existingSession = readStoredSession();
     if (existingSession) {
       setSession(existingSession);
     }
+    const reports = readStoredReports();
+    setAllReports(reports);
   }, []);
 
   const filteredPersonnel = personnelRecords.filter((person) => {
@@ -348,6 +473,73 @@ function App() {
     clearSession();
     setSession(null);
     setAuthMode('login');
+  };
+
+  const handleSubmitReport = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!reportForm.className || !reportForm.gcvnName) {
+      alert('Vui lòng điền đầy đủ thông tin lớp và tên GVCN');
+      return;
+    }
+    
+    const newReport: ReportSubmission = {
+      id: `report-${Date.now()}`,
+      submittedAt: new Date().toISOString(),
+      gcvnName: reportForm.gcvnName || '',
+      gcvnEmail: session?.user.email || '',
+      className: reportForm.className || '',
+      meetingTime: reportForm.meetingTime || '',
+      meetingDate: reportForm.meetingDate || '',
+      meetingLocation: reportForm.meetingLocation || '',
+      totalStudents: reportForm.totalStudents || 0,
+      maleStudents: reportForm.maleStudents || 0,
+      femaleStudents: reportForm.femaleStudents || 0,
+      presentStudents: reportForm.presentStudents || 0,
+      presentMale: reportForm.presentMale || 0,
+      presentFemale: reportForm.presentFemale || 0,
+      absentStudents: reportForm.absentStudents || 0,
+      academicStats: reportForm.academicStats || { excellent: 0, good: 0, satisfactory: 0 },
+      conductStats: reportForm.conductStats || { excellent: 0, good: 0, satisfactory: 0 },
+      partyMembers: reportForm.partyMembers || 0,
+      locationStats: reportForm.locationStats || {},
+      prizeEntries: reportForm.prizeEntries || [],
+      classPositions: reportForm.classPositions || [],
+      facilities: reportForm.facilities || [],
+      assentStudentList: reportForm.assentStudentList || [],
+      gcvnOpinion: reportForm.gcvnOpinion || '',
+    };
+    
+    saveReport(newReport);
+    const updatedReports = readStoredReports();
+    setAllReports(updatedReports);
+    alert('Báo cáo đã được gửi thành công!');
+    setReportMode('select');
+    setReportForm({
+      id: '',
+      submittedAt: new Date().toISOString(),
+      gcvnName: '',
+      gcvnEmail: session?.user.email || '',
+      className: '',
+      meetingTime: '',
+      meetingDate: '03/9/2026',
+      meetingLocation: '',
+      totalStudents: 0,
+      maleStudents: 0,
+      femaleStudents: 0,
+      presentStudents: 0,
+      presentMale: 0,
+      presentFemale: 0,
+      absentStudents: 0,
+      academicStats: { excellent: 0, good: 0, satisfactory: 0 },
+      conductStats: { excellent: 0, good: 0, satisfactory: 0 },
+      partyMembers: 0,
+      locationStats: {},
+      prizeEntries: [],
+      classPositions: [],
+      facilities: [],
+      assentStudentList: [],
+      gcvnOpinion: '',
+    });
   };
 
   if (!session) {
@@ -427,8 +619,12 @@ function App() {
             <button
               key={item.label}
               type="button"
-              className={`nav-item ${view === item.view && item.label === 'Tổng quan' ? 'active' : item.label === 'Nhân sự' && view === 'personnel' ? 'active' : ''}`}
-              onClick={() => item.view === 'personnel' ? setView('personnel') : setView('overview')}
+              className={`nav-item ${view === item.view && item.label === 'Tổng quan' ? 'active' : item.label === 'Nhân sự' && view === 'personnel' ? 'active' : item.label === 'Báo cáo' && view === 'reports' ? 'active' : ''}`}
+              onClick={() => {
+                if (item.view === 'personnel') setView('personnel');
+                else if (item.view === 'reports') setView('reports');
+                else setView('overview');
+              }}
             >
               <span>{item.label}</span>
               {item.badge && <em>{item.badge}</em>}
@@ -445,79 +641,26 @@ function App() {
 
       <main className="main-panel">
         {view === 'personnel' ? (
-          <section className="personnel-page panel">
-            <div className="personnel-page-header">
-              <div>
-                <small>Nhân sự toàn trường</small>
-                <h1>Danh sách nhân sự</h1>
-              </div>
-              <button type="button" className="ghost-btn" onClick={() => setView('overview')}>Quay lại dashboard</button>
-            </div>
-
-            <div className="personnel-page-summary">
-              <div className="mini-stat purple">
-                <span>Tổng nhân sự</span>
-                <strong>{TOTAL_PERSONNEL}</strong>
-              </div>
-              <div className="mini-stat blue">
-                <span>Giáo viên</span>
-                <strong>{personnelRecords.filter((person) => person.position.includes('Giáo viên') || person.position.includes('Tổ trưởng') || person.position.includes('Tổ phó')).length}</strong>
-              </div>
-              <div className="mini-stat green">
-                <span>Nhân viên</span>
-                <strong>{personnelRecords.filter((person) => person.position.includes('Nhân viên') || person.position.includes('Văn thư') || person.position.includes('Kế toán') || person.position.includes('Y tế')).length}</strong>
-              </div>
-              <div className="mini-stat orange">
-                <span>Ban giám hiệu</span>
-                <strong>{personnelRecords.filter((person) => person.department === 'Ban giám hiệu').length}</strong>
-              </div>
-            </div>
-
-            <div className="personnel-toolbar">
-              <div className="search-box full-width">
-                <span>🔎</span>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Tìm theo tên, chức vụ, đơn vị, bộ môn..."
-                />
-              </div>
-            </div>
-
-            <div className="personnel-table-wrap">
-              <table className="personnel-table">
-                <thead>
-                  <tr>
-                    <th>Họ tên</th>
-                    <th>Chức vụ</th>
-                    <th>Đơn vị</th>
-                    <th>Bộ môn</th>
-                    <th>Giới tính</th>
-                    <th>Ngày sinh</th>
-                    <th>Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPersonnel.map((person) => (
-                    <tr key={person.id}>
-                      <td>{person.name}</td>
-                      <td>{person.position}</td>
-                      <td>{person.unit}</td>
-                      <td>{person.department}</td>
-                      <td>{person.gender}</td>
-                      <td>{person.birth}</td>
-                      <td>
-                        <span className={`status ${person.status === 'Hoạt động' ? 'active' : person.status === 'Chờ duyệt' ? 'pending' : 'inactive'}`}>
-                          {person.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          <PersonnelView
+            totalPersonnel={TOTAL_PERSONNEL}
+            allPersonnel={personnelRecords}
+            filteredPersonnel={filteredPersonnel}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onBackToOverview={() => setView('overview')}
+          />
+        ) : view === 'reports' ? (
+          <ReportPage
+            session={session}
+            reportMode={reportMode}
+            reportForm={reportForm}
+            allReports={allReports}
+            onModeChange={setReportMode}
+            onFormChange={(updates) => setReportForm({...reportForm, ...updates})}
+            onSubmitReport={handleSubmitReport}
+            onExportJSON={exportReportsAsJSON}
+            onBackToOverview={() => setView('overview')}
+          />
         ) : (
           <>
             <header className="topbar">
