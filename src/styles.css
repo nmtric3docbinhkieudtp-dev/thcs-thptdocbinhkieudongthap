@@ -1233,6 +1233,182 @@ tbody tr:last-child td {
   color: var(--muted);
 }
 
+/* Custom Styles for Expanded Reports and Tables */
+.sub-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  margin-top: 8px;
+}
+
+.sub-section-block h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sub-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sub-section-tip {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: white;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.report-table th,
+.report-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.report-table th {
+  background: var(--purple-soft);
+  color: var(--purple);
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.report-table tr:last-child td {
+  border-bottom: none;
+}
+
+.report-table input,
+.report-table select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  color: var(--text);
+  background: white;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.report-table input:focus,
+.report-table select:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 2px var(--purple-soft);
+}
+
+.report-table .font-semibold {
+  font-weight: 600;
+}
+
+.add-row-btn {
+  align-self: flex-start;
+  background: white;
+  color: var(--purple);
+  border: 1px dashed var(--purple);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.add-row-btn:hover {
+  background: var(--purple-soft);
+  transform: translateY(-1px);
+}
+
+.delete-row-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--muted);
+  transition: all 0.2s ease;
+}
+
+.delete-row-btn:hover {
+  background: var(--orange-soft);
+  color: var(--orange);
+  transform: scale(1.1);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.py-3 {
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+}
+
+.report-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.report-card.active {
+  border-color: var(--purple);
+  box-shadow: 0 12px 30px rgba(93, 74, 232, 0.08);
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.detail-section h5 {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  color: var(--purple);
+  font-weight: 600;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.detail-table th,
+.detail-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.detail-table th {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.detail-table tr:hover td {
+  background: rgba(120, 129, 178, 0.02);
+}
+
 @media (max-width: 980px) {
   .school-app {
     flex-direction: column;

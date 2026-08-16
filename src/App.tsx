@@ -5,6 +5,8 @@ import {
   firebaseSignIn,
   firebaseSignUp,
   isFirebaseConfigured,
+  saveReportToFirestore,
+  fetchAllReportsFromFirestore,
 } from './firebase';
 import { ReportPage } from './components/Reports/ReportPage';
 import { PersonnelView } from './components/Personnel/PersonnelView';
@@ -331,10 +333,11 @@ function exportReportsAsJSON(): void {
 }
 
 function buildDemoSession(email: string): AuthSession {
+  const isDocBinhKieuAdmin = email.toLowerCase().includes('admin');
   const demoUser: AppUser = {
     id: getDemoId(),
     email,
-    role: 'member',
+    role: isDocBinhKieuAdmin ? 'admin' : 'member',
     demo: true,
   };
 
@@ -354,13 +357,15 @@ async function signInWithFirebase(email: string, password: string): Promise<Auth
   }
 
   const user = await firebaseSignIn(email, password);
+  const userEmail = user.email ?? email;
+  const isDocBinhKieuAdmin = userEmail.toLowerCase().includes('admin');
   return {
     access_token: user.uid,
     refresh_token: user.refreshToken,
     user: {
       id: user.uid,
-      email: user.email ?? email,
-      role: 'member',
+      email: userEmail,
+      role: isDocBinhKieuAdmin ? 'admin' : 'member',
       demo: false,
     },
   };
@@ -372,13 +377,15 @@ async function signUpWithFirebase(email: string, password: string): Promise<Auth
   }
 
   const user = await firebaseSignUp(email, password);
+  const userEmail = user.email ?? email;
+  const isDocBinhKieuAdmin = userEmail.toLowerCase().includes('admin');
   return {
     access_token: user.uid,
     refresh_token: user.refreshToken,
     user: {
       id: user.uid,
-      email: user.email ?? email,
-      role: 'member',
+      email: userEmail,
+      role: isDocBinhKieuAdmin ? 'admin' : 'member',
       demo: false,
     },
   };
@@ -429,9 +436,24 @@ function App() {
     if (existingSession) {
       setSession(existingSession);
     }
-    const reports = readStoredReports();
-    setAllReports(reports);
   }, []);
+
+  useEffect(() => {
+    const loadReports = async () => {
+      if (isFirebaseConfigured && session && !session.user.demo) {
+        try {
+          const cloudReports = await fetchAllReportsFromFirestore();
+          setAllReports(cloudReports);
+        } catch (err) {
+          console.error("Lỗi khi tải báo cáo từ Firestore, chuyển sang LocalStorage:", err);
+          setAllReports(readStoredReports());
+        }
+      } else {
+        setAllReports(readStoredReports());
+      }
+    };
+    loadReports();
+  }, [session]);
 
   const filteredPersonnel = personnelRecords.filter((person) => {
     const keyword = searchTerm.trim().toLowerCase();
@@ -475,7 +497,7 @@ function App() {
     setAuthMode('login');
   };
 
-  const handleSubmitReport = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmitReport = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!reportForm.className || !reportForm.gcvnName) {
       alert('Vui lòng điền đầy đủ thông tin lớp và tên GVCN');
@@ -509,37 +531,58 @@ function App() {
       gcvnOpinion: reportForm.gcvnOpinion || '',
     };
     
-    saveReport(newReport);
-    const updatedReports = readStoredReports();
-    setAllReports(updatedReports);
-    alert('Báo cáo đã được gửi thành công!');
-    setReportMode('select');
-    setReportForm({
-      id: '',
-      submittedAt: new Date().toISOString(),
-      gcvnName: '',
-      gcvnEmail: session?.user.email || '',
-      className: '',
-      meetingTime: '',
-      meetingDate: '03/9/2026',
-      meetingLocation: '',
-      totalStudents: 0,
-      maleStudents: 0,
-      femaleStudents: 0,
-      presentStudents: 0,
-      presentMale: 0,
-      presentFemale: 0,
-      absentStudents: 0,
-      academicStats: { excellent: 0, good: 0, satisfactory: 0 },
-      conductStats: { excellent: 0, good: 0, satisfactory: 0 },
-      partyMembers: 0,
-      locationStats: {},
-      prizeEntries: [],
-      classPositions: [],
-      facilities: [],
-      assentStudentList: [],
-      gcvnOpinion: '',
-    });
+    setIsSubmitting(true);
+    try {
+      if (isFirebaseConfigured && (!session || !session.user.demo)) {
+        await saveReportToFirestore(newReport);
+      }
+      
+      // Backup to LocalStorage
+      saveReport(newReport);
+      
+      // Update local state
+      if (isFirebaseConfigured && (!session || !session.user.demo)) {
+        const cloudReports = await fetchAllReportsFromFirestore();
+        setAllReports(cloudReports);
+      } else {
+        const localReports = readStoredReports();
+        setAllReports(localReports);
+      }
+      
+      alert('Báo cáo đã được gửi thành công lên hệ thống đám mây!');
+      setReportMode('select');
+      setReportForm({
+        id: '',
+        submittedAt: new Date().toISOString(),
+        gcvnName: '',
+        gcvnEmail: session?.user.email || '',
+        className: '',
+        meetingTime: '',
+        meetingDate: '03/9/2026',
+        meetingLocation: '',
+        totalStudents: 0,
+        maleStudents: 0,
+        femaleStudents: 0,
+        presentStudents: 0,
+        presentMale: 0,
+        presentFemale: 0,
+        absentStudents: 0,
+        academicStats: { excellent: 0, good: 0, satisfactory: 0 },
+        conductStats: { excellent: 0, good: 0, satisfactory: 0 },
+        partyMembers: 0,
+        locationStats: {},
+        prizeEntries: [],
+        classPositions: [],
+        facilities: [],
+        assentStudentList: [],
+        gcvnOpinion: '',
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Không thể gửi báo cáo lên hệ thống. Vui lòng kiểm tra lại kết nối mạng hoặc cấu hình Firebase của bạn!');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!session) {

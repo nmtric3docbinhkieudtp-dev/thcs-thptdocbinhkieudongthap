@@ -6,6 +6,15 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  collection,
+  getDocs,
+  query,
+  orderBy
+} from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -24,6 +33,7 @@ export const isFirebaseConfigured = Boolean(
 
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
 
 export async function firebaseSignIn(email: string, password: string) {
   if (!auth) {
@@ -49,6 +59,30 @@ export async function firebaseLogout() {
   }
 
   await signOut(auth);
+}
+
+// Lưu báo cáo lên Cloud Firestore
+export async function saveReportToFirestore(report: any) {
+  if (!db) {
+    throw new Error('Firestore chưa được cấu hình.');
+  }
+  const docRef = doc(db, 'reports', report.id);
+  await setDoc(docRef, report);
+}
+
+// Lấy tất cả báo cáo từ Cloud Firestore sắp xếp theo ngày gửi giảm dần
+export async function fetchAllReportsFromFirestore() {
+  if (!db) {
+    return [];
+  }
+  const reportsCol = collection(db, 'reports');
+  const q = query(reportsCol, orderBy('submittedAt', 'desc'));
+  const querySnapshot = await getDocs(q);
+  const reports: any[] = [];
+  querySnapshot.forEach((docSnap) => {
+    reports.push(docSnap.data());
+  });
+  return reports;
 }
 
 export type FirebaseUser = User;
