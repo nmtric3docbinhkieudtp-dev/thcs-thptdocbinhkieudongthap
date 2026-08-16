@@ -1,4 +1,4 @@
-import type { ReportSubmission } from '../../App';
+import type { ReportSubmission } from '../../types';
 
 interface ReportAdminProps {
   allReports: ReportSubmission[];

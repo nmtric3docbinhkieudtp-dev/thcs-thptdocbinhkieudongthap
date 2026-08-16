@@ -1,5 +1,5 @@
 import { FormEvent } from 'react';
-import type { ReportSubmission, AuthSession } from '../../App';
+import type { ReportSubmission, AuthSession } from '../../types';
 import { ReportSelector } from './ReportSelector';
 import { ReportForm } from './ReportForm';
 import { ReportAdmin } from './ReportAdmin';

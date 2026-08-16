@@ -1,5 +1,5 @@
 import { FormEvent } from 'react';
-import type { ReportSubmission } from '../../App';
+import type { ReportSubmission } from '../../types';
 
 interface ReportFormProps {
   reportForm: Partial<ReportSubmission>;
