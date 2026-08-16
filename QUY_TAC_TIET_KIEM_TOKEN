@@ -1,4 +1,6 @@
-Cái nào có thể hướng dẫn tôi làm theo hướng dẫn được thì bạn chỉ cần hướng dẫn. Tôi sẽ tự làm để tiết kiệm token
-Luôn làm việc theo cách tối ưu token để tránh hết token free của tôi
-Khi nào tôi yêu cầu mới được lại hết dự án hoặc có thể tóm tắt các chức năng chính của dự án để có thể nắm được ngay mà không cần quét lại toàn bộ dự án
-Những phần cài đặt nào cần cài thì nói tôi để tôi tự lên goolge tải về cài. Cách này có thể tiết kiệm nhiều token không. Nếu nhiều thì hãy yêu cầu cần cài thêm cái gì thì tôi sẽ cài thêm theo yêu cầu. Không cần tự cài
+1/ Cái nào có thể hướng dẫn tôi làm theo hướng dẫn được thì bạn chỉ cần hướng dẫn. Tôi sẽ tự làm để tiết kiệm token
+2/ Luôn làm việc theo cách tối ưu token để tránh hết token free của tôi
+3/ Khi nào tôi yêu cầu mới được lại hết dự án hoặc có thể tóm tắt các chức năng chính của dự án để có thể nắm được ngay mà không cần quét lại toàn bộ dự án
+4/ Những phần cài đặt nào cần cài thì nói tôi để tôi tự lên goolge tải về cài. Cách này có thể tiết kiệm nhiều token không. Nếu nhiều thì hãy yêu cầu cần cài thêm cái gì thì tôi sẽ cài thêm theo yêu cầu. Không cần tự cài
+5/ Nếu các file nào nặng quá (ví dụ app.tsx) hoặc các file khác thì nên chia nhỏ lại để tránh phải đọc lại những nội dung không cần thiết hoặc không liên quan nhằm giảm quato khi sử dung.
+6/ Nếu nội dung thuộc các chức năng khác nhau thì chia thành các file khác nhau để không phải đọc lại những dữ lieu không cần thiết. ví dụ app có chức năng gửi tin nhắn telegram khi có văn bản mới thì khi mình viết code liên quan để xuất đầu ra văn bản thì không có liên quan gì chức năng này, khi đó nên tách mỗi chức năng ra file riêng để đọc code được nhanh và ít hao tổn quato.
