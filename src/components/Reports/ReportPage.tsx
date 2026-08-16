@@ -13,6 +13,7 @@ interface ReportPageProps {
   onFormChange: (updates: Partial<ReportSubmission>) => void;
   onSubmitReport: (e: FormEvent<HTMLFormElement>) => void;
   onExportJSON: () => void;
+  onEditReport: (report: ReportSubmission) => void;
   onBackToOverview: () => void;
 }
 
@@ -25,8 +26,10 @@ export function ReportPage({
   onFormChange,
   onSubmitReport,
   onExportJSON,
+  onEditReport,
   onBackToOverview,
 }: ReportPageProps) {
+  const myReports = allReports.filter((report) => report.gcvnEmail === session.user.email);
   return (
     <section className="personnel-page panel">
       <div className="personnel-page-header">
@@ -40,6 +43,8 @@ export function ReportPage({
       {reportMode === 'select' && (
         <ReportSelector 
           allReports={allReports}
+          myReports={myReports}
+          onEditReport={onEditReport}
           isAdmin={session.user.role === 'admin'}
           onSelectForm={() => onModeChange('form')}
           onSelectView={() => onModeChange('view')}

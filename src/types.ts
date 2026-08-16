@@ -73,6 +73,9 @@ export type ReportSubmission = {
   meetingTime: string;
   meetingDate: string;
   meetingLocation: string;
+  meetingEndTime: string;
+  secretaryName: string;
+  classGroupLink: string;
   totalStudents: number;
   maleStudents: number;
   femaleStudents: number;
@@ -89,4 +92,6 @@ export type ReportSubmission = {
   facilities: FacilityItem[];
   assentStudentList: AbsentStudent[];
   gcvnOpinion: string;
+  handoverTime: string;
+  handoverLocation: string;
 };

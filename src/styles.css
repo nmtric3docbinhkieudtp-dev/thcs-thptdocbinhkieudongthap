@@ -1270,3 +1270,112 @@ tbody tr:last-child td {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Báo cáo: bảng nhập liệu & xem chi tiết ===== */
+.section-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.form-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted, #667);
+  font-style: italic;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.report-table th,
+.report-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.report-table th {
+  background: #f5f6ff;
+  font-weight: 700;
+  color: var(--purple);
+}
+
+.report-table tr:last-child td {
+  border-bottom: none;
+}
+
+.report-table input,
+.report-table select {
+  width: 100%;
+  min-width: 110px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.report-table input:focus,
+.report-table select:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px var(--purple-soft);
+}
+
+.report-detail {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.report-detail h4 {
+  margin: 0;
+  color: var(--purple);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  font-size: 0.92rem;
+}
+
+.detail-grid span {
+  color: var(--purple);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.detail-text {
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.my-reports {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.my-reports h4 {
+  margin: 0;
+  color: var(--purple);
+}

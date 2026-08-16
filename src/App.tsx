@@ -2,7 +2,7 @@ import { FormEvent, useState, useEffect } from 'react';
 import { auth, firebaseLogout } from './firebase';
 import type { AuthSession, ReportSubmission, ViewMode } from './types';
 import { readStoredSession, clearSession, signInWithFirebase, signUpWithFirebase } from './auth/session';
-import { readStoredReports, saveReport, exportReportsAsJSON, createEmptyReportForm } from './reports/storage';
+import { readStoredReports, saveReport, exportReportsAsJSON, createEmptyReportForm, buildReportFromForm } from './reports/storage';
 import { personnelRecords, TOTAL_PERSONNEL } from './data/personnel';
 import { navItems } from './data/dashboard';
 import { LoginPage } from './components/Auth/LoginPage';
@@ -29,6 +29,7 @@ function App() {
     const existingSession = readStoredSession();
     if (existingSession) {
       setSession(existingSession);
+      setReportForm(createEmptyReportForm(existingSession.user.email, existingSession.user.name));
     }
     const reports = readStoredReports();
     setAllReports(reports);
@@ -55,6 +56,7 @@ function App() {
         : await signUpWithFirebase(email, password);
 
       setSession(nextSession);
+      setReportForm(createEmptyReportForm(nextSession.user.email, nextSession.user.name));
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : 'Xảy ra lỗi khi xác thực tài khoản.');
     } finally {
@@ -83,39 +85,21 @@ function App() {
       return;
     }
 
-    const newReport: ReportSubmission = {
-      id: `report-${Date.now()}`,
-      submittedAt: new Date().toISOString(),
-      gcvnName: reportForm.gcvnName || '',
-      gcvnEmail: session?.user.email || '',
-      className: reportForm.className || '',
-      meetingTime: reportForm.meetingTime || '',
-      meetingDate: reportForm.meetingDate || '',
-      meetingLocation: reportForm.meetingLocation || '',
-      totalStudents: reportForm.totalStudents || 0,
-      maleStudents: reportForm.maleStudents || 0,
-      femaleStudents: reportForm.femaleStudents || 0,
-      presentStudents: reportForm.presentStudents || 0,
-      presentMale: reportForm.presentMale || 0,
-      presentFemale: reportForm.presentFemale || 0,
-      absentStudents: reportForm.absentStudents || 0,
-      academicStats: reportForm.academicStats || { excellent: 0, good: 0, satisfactory: 0 },
-      conductStats: reportForm.conductStats || { excellent: 0, good: 0, satisfactory: 0 },
-      partyMembers: reportForm.partyMembers || 0,
-      locationStats: reportForm.locationStats || {},
-      prizeEntries: reportForm.prizeEntries || [],
-      classPositions: reportForm.classPositions || [],
-      facilities: reportForm.facilities || [],
-      assentStudentList: reportForm.assentStudentList || [],
-      gcvnOpinion: reportForm.gcvnOpinion || '',
-    };
+    const existing = allReports.find(
+      (report) => report.gcvnEmail === session?.user.email && report.className === reportForm.className,
+    );
+    if (existing && !window.confirm(`Lớp ${reportForm.className} đã có báo cáo. Ghi đè báo cáo cũ?`)) {
+      return;
+    }
+
+    const newReport = buildReportFromForm(reportForm, session?.user.email || '', existing?.id);
 
     saveReport(newReport);
     const updatedReports = readStoredReports();
     setAllReports(updatedReports);
     alert('Báo cáo đã được gửi thành công!');
     setReportMode('select');
-    setReportForm(createEmptyReportForm(session?.user.email || ''));
+    setReportForm(createEmptyReportForm(session?.user.email || '', session?.user.name));
   };
 
   if (!session) {
@@ -190,6 +174,10 @@ function App() {
             onFormChange={(updates) => setReportForm({...reportForm, ...updates})}
             onSubmitReport={handleSubmitReport}
             onExportJSON={exportReportsAsJSON}
+            onEditReport={(report) => {
+              setReportForm(report);
+              setReportMode('form');
+            }}
             onBackToOverview={() => setView('overview')}
           />
         ) : (

@@ -1,4 +1,11 @@
 import type { ReportSubmission } from '../types';
+import {
+  createDefaultAbsentStudents,
+  createDefaultClassPositions,
+  createDefaultFacilities,
+  createDefaultLocationStats,
+  createDefaultPrizeEntries,
+} from './constants';
 
 const REPORTS_STORAGE_KEY = 'dbk-report-submissions';
 
@@ -22,6 +29,11 @@ export function saveReport(report: ReportSubmission) {
   window.localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
 }
 
+export function deleteReport(id: string) {
+  const reports = readStoredReports().filter((report) => report.id !== id);
+  window.localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
+}
+
 export function exportReportsAsJSON(): void {
   const reports = readStoredReports();
   const dataStr = JSON.stringify(reports, null, 2);
@@ -34,16 +46,19 @@ export function exportReportsAsJSON(): void {
   URL.revokeObjectURL(url);
 }
 
-export function createEmptyReportForm(gcvnEmail: string): Partial<ReportSubmission> {
+export function createEmptyReportForm(gcvnEmail: string, gcvnName = ''): Partial<ReportSubmission> {
   return {
     id: '',
     submittedAt: new Date().toISOString(),
-    gcvnName: '',
+    gcvnName,
     gcvnEmail,
     className: '',
     meetingTime: '',
-    meetingDate: '03/9/2026',
+    meetingDate: '',
     meetingLocation: '',
+    meetingEndTime: '',
+    secretaryName: '',
+    classGroupLink: '',
     totalStudents: 0,
     maleStudents: 0,
     femaleStudents: 0,
@@ -54,11 +69,47 @@ export function createEmptyReportForm(gcvnEmail: string): Partial<ReportSubmissi
     academicStats: { excellent: 0, good: 0, satisfactory: 0 },
     conductStats: { excellent: 0, good: 0, satisfactory: 0 },
     partyMembers: 0,
-    locationStats: {},
-    prizeEntries: [],
-    classPositions: [],
-    facilities: [],
-    assentStudentList: [],
+    locationStats: createDefaultLocationStats(),
+    prizeEntries: createDefaultPrizeEntries(),
+    classPositions: createDefaultClassPositions(),
+    facilities: createDefaultFacilities(),
+    assentStudentList: createDefaultAbsentStudents(),
     gcvnOpinion: '',
+    handoverTime: '',
+    handoverLocation: '',
+  };
+}
+
+export function buildReportFromForm(form: Partial<ReportSubmission>, gcvnEmail: string, id?: string): ReportSubmission {
+  return {
+    id: id || `report-${Date.now()}`,
+    submittedAt: new Date().toISOString(),
+    gcvnName: form.gcvnName || '',
+    gcvnEmail,
+    className: form.className || '',
+    meetingTime: form.meetingTime || '',
+    meetingDate: form.meetingDate || '',
+    meetingLocation: form.meetingLocation || '',
+    meetingEndTime: form.meetingEndTime || '',
+    secretaryName: form.secretaryName || '',
+    classGroupLink: form.classGroupLink || '',
+    totalStudents: form.totalStudents || 0,
+    maleStudents: form.maleStudents || 0,
+    femaleStudents: form.femaleStudents || 0,
+    presentStudents: form.presentStudents || 0,
+    presentMale: form.presentMale || 0,
+    presentFemale: form.presentFemale || 0,
+    absentStudents: form.absentStudents || 0,
+    academicStats: form.academicStats || { excellent: 0, good: 0, satisfactory: 0 },
+    conductStats: form.conductStats || { excellent: 0, good: 0, satisfactory: 0 },
+    partyMembers: form.partyMembers || 0,
+    locationStats: form.locationStats || createDefaultLocationStats(),
+    prizeEntries: form.prizeEntries || createDefaultPrizeEntries(),
+    classPositions: form.classPositions || createDefaultClassPositions(),
+    facilities: form.facilities || createDefaultFacilities(),
+    assentStudentList: (form.assentStudentList || []).filter((student) => student.name.trim() !== ''),
+    gcvnOpinion: form.gcvnOpinion || '',
+    handoverTime: form.handoverTime || '',
+    handoverLocation: form.handoverLocation || '',
   };
 }
