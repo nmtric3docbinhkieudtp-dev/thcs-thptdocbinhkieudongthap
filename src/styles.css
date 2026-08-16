@@ -549,15 +549,44 @@ tbody tr:last-child td {
   gap: 8px;
 }
 
-.auth-options a {
+.auth-options a,
+.text-link {
   color: var(--purple);
   text-decoration: none;
   font-weight: 600;
+  background: transparent;
+  border: none;
+  padding: 0;
 }
 
 .auth-btn {
   width: 100%;
   margin-top: 4px;
+}
+
+.auth-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  background: #fff1f1;
+  color: #c62828;
+  border: 1px solid #f8c7c7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+}
+
+.user-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: var(--purple-soft);
+  color: var(--purple);
+  font-size: 0.72rem;
+  font-weight: 700;
 }
 
 .personnel-module {
