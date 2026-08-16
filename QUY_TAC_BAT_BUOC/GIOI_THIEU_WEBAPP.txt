@@ -1,0 +1,9 @@
+Đây là webapp được Thầy Nguyễn Minh Trí (Phó Hiệu trưởng Trường THPT Đốc Binh Kiều) tạo ra. Webapp này được tạo ra với mong muốn như sau:
+1/ Dùng để tổng hợp dữ liệu, báo cáo từ các bộ phận, các cá nhân trong trường.
+2/ Có thể sử dụng được trên cả điện thoại, laptop và máy tính bang.
+3/ Có tài khoản đăng nhập dành cho quản trị viên, tài khoản đăng nhập dành riêng cho từng giáo viên, nhân viên trong trường. Thông tin về giáo viên để ở file BẢNG THÔNG TIN NHÂN SỰ TOÀN TRƯỜNG để ở thư mục QUY TẮC BẮT BUỘC
+4/ Có chỗ để lưu dữ liệu khi thầy cô nhập liệu lên hoặc gửi file đính kèm lên. Khuyến khích thiết kế để lưu dữ liệu trên onedrive hoặc google drive. Còn về tải file thì sử dụng cái nào có thể lưu được nhiều file nhưng miễn phí và dễ sử dụng là được.
+5/ Giao diện: hiện đại, màu sắc tươi sáng, phong cách 3D. Phong cách thiết kế theo file "theme webapp" để ở thư mục QUY TẮC BẮT BUỘC.
+6/ Webapp được thiết kế để tối ưu cho việc đẩy lên website vercel.app
+7/ Webapp này sẽ được cập nhật liên tục, khi có báo cáo mới thì sẽ bổ sung them chỗ để các bộ phận, thầy cô nhập vào.
+8/ Cần có chỗ để import, export khi cần xử lý dữ liệu lớn.
