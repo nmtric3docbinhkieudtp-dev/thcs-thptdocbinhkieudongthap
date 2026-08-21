@@ -81,7 +81,20 @@ export async function ensureAccountProfile(uid: string, email: string, isAdmin: 
     throw new Error('Firestore chưa được cấu hình.');
   }
 
-  const existingProfile = await getAccountProfile(uid);
+  let existingProfile: AccountProfile | null = null;
+  try {
+    existingProfile = await getAccountProfile(uid);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Missing or insufficient permissions')) {
+      return {
+        email,
+        role: isAdmin ? 'admin' : 'member',
+        status: 'approved',
+      };
+    }
+    throw error;
+  }
+
   if (existingProfile) {
     return existingProfile;
   }
