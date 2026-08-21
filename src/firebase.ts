@@ -9,7 +9,9 @@ import {
 import {
   getFirestore,
   doc,
+  getDoc,
   setDoc,
+  updateDoc,
   collection,
   getDocs,
   query,
@@ -45,12 +47,71 @@ export async function firebaseSignIn(email: string, password: string) {
 }
 
 export async function firebaseSignUp(email: string, password: string) {
-  if (!auth) {
+  if (!auth || !db) {
     throw new Error('Firebase chưa được cấu hình.');
   }
 
   const result = await createUserWithEmailAndPassword(auth, email, password);
+  await setDoc(doc(db, 'users', result.user.uid), {
+    email: result.user.email ?? email,
+    role: 'member',
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+  });
   return result.user;
+}
+
+export type AccountProfile = {
+  email: string;
+  role: 'member' | 'admin';
+  status: 'pending' | 'approved';
+};
+
+export async function getAccountProfile(uid: string): Promise<AccountProfile | null> {
+  if (!db) {
+    throw new Error('Firestore chưa được cấu hình.');
+  }
+
+  const snapshot = await getDoc(doc(db, 'users', uid));
+  return snapshot.exists() ? (snapshot.data() as AccountProfile) : null;
+}
+
+export async function ensureAccountProfile(uid: string, email: string, isAdmin: boolean): Promise<AccountProfile> {
+  if (!db) {
+    throw new Error('Firestore chưa được cấu hình.');
+  }
+
+  const existingProfile = await getAccountProfile(uid);
+  if (existingProfile) {
+    return existingProfile;
+  }
+
+  const profile: AccountProfile = {
+    email,
+    role: isAdmin ? 'admin' : 'member',
+    status: isAdmin ? 'approved' : 'pending',
+  };
+  await setDoc(doc(db, 'users', uid), profile);
+  return profile;
+}
+
+export async function fetchPendingAccounts(): Promise<Array<AccountProfile & { id: string }>> {
+  if (!db) {
+    throw new Error('Firestore chưa được cấu hình.');
+  }
+
+  const snapshot = await getDocs(collection(db, 'users'));
+  return snapshot.docs
+    .map((account) => ({ id: account.id, ...(account.data() as AccountProfile) }))
+    .filter((account) => account.status === 'pending');
+}
+
+export async function approveAccount(uid: string) {
+  if (!db) {
+    throw new Error('Firestore chưa được cấu hình.');
+  }
+
+  await updateDoc(doc(db, 'users', uid), { status: 'approved' });
 }
 
 export async function firebaseLogout() {

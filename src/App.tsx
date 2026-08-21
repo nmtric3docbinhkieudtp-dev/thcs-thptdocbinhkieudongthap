@@ -5,11 +5,13 @@ import {
   firebaseSignIn,
   firebaseSignUp,
   isFirebaseConfigured,
+  ensureAccountProfile,
   saveReportToFirestore,
   fetchAllReportsFromFirestore,
 } from './firebase';
 import { ReportPage } from './components/Reports/ReportPage';
 import { PersonnelView } from './components/Personnel/PersonnelView';
+import { AccountApproval } from './components/AccountApproval';
 
 type UserRole = 'member' | 'admin';
 type ViewMode = 'overview' | 'personnel' | 'reports';
@@ -18,7 +20,6 @@ type AppUser = {
   id: string;
   email: string;
   role: UserRole;
-  demo?: boolean;
 };
 
 export type AuthSession = {
@@ -276,23 +277,6 @@ const personnelRecords: PersonnelRecord[] = [
   { id: 120, name: 'Nguyễn Anh Văn', position: 'Giáo viên', unit: 'Trường THCS Tân Kiều', department: 'GDTC - QPAN - Nghệ thuật', gender: 'Nam', birth: '23/06/1986', subject: 'Âm nhạc', status: 'Hoạt động' },
 ];
 
-function getDemoId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-
-  return 'demo-user';
-}
-
-function readStoredSession(): AuthSession | null {
-  try {
-    const sessionText = window.localStorage.getItem(STORAGE_KEY);
-    return sessionText ? (JSON.parse(sessionText) as AuthSession) : null;
-  } catch {
-    return null;
-  }
-}
-
 function saveSession(session: AuthSession) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 }
@@ -333,63 +317,41 @@ function exportReportsAsJSON(): void {
   URL.revokeObjectURL(url);
 }
 
-function buildDemoSession(email: string): AuthSession {
-  const isDocBinhKieuAdmin = email.toLowerCase().includes('admin');
-  const demoUser: AppUser = {
-    id: getDemoId(),
-    email,
-    role: isDocBinhKieuAdmin ? 'admin' : 'member',
-    demo: true,
-  };
-
-  const demoSession: AuthSession = {
-    access_token: 'demo-access-token',
-    refresh_token: 'demo-refresh-token',
-    user: demoUser,
-  };
-
-  saveSession(demoSession);
-  return demoSession;
-}
-
 async function signInWithFirebase(email: string, password: string): Promise<AuthSession> {
   if (!isFirebaseConfigured || !auth) {
-    return buildDemoSession(email);
+    throw new Error('Hệ thống đăng nhập chưa được cấu hình với Firebase.');
   }
 
   const user = await firebaseSignIn(email, password);
   const userEmail = user.email ?? email;
   const isDocBinhKieuAdmin = userEmail.toLowerCase() === ADMIN_EMAIL;
-  return {
-    access_token: user.uid,
-    refresh_token: user.refreshToken,
-    user: {
-      id: user.uid,
-      email: userEmail,
-      role: isDocBinhKieuAdmin ? 'admin' : 'member',
-      demo: false,
-    },
-  };
-}
-
-async function signUpWithFirebase(email: string, password: string): Promise<AuthSession> {
-  if (!isFirebaseConfigured || !auth) {
-    return buildDemoSession(email);
+  const profile = await ensureAccountProfile(user.uid, userEmail, isDocBinhKieuAdmin);
+  if (profile.status !== 'approved') {
+    await firebaseLogout();
+    throw new Error('Tài khoản đang chờ quản trị viên duyệt.');
   }
 
-  const user = await firebaseSignUp(email, password);
-  const userEmail = user.email ?? email;
-  const isDocBinhKieuAdmin = userEmail.toLowerCase() === ADMIN_EMAIL;
-  return {
+  const nextSession: AuthSession = {
     access_token: user.uid,
     refresh_token: user.refreshToken,
     user: {
       id: user.uid,
       email: userEmail,
-      role: isDocBinhKieuAdmin ? 'admin' : 'member',
-      demo: false,
+      role: profile.role,
     },
   };
+  saveSession(nextSession);
+  return nextSession;
+}
+
+async function signUpWithFirebase(email: string, password: string): Promise<never> {
+  if (!isFirebaseConfigured || !auth) {
+    throw new Error('Hệ thống đăng nhập chưa được cấu hình với Firebase.');
+  }
+
+  await firebaseSignUp(email, password);
+  await firebaseLogout();
+  throw new Error('Đăng ký thành công. Tài khoản đang chờ quản trị viên duyệt.');
 }
 
 function App() {
@@ -403,6 +365,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [reportMode, setReportMode] = useState<'select' | 'form' | 'view'>('select');
   const [allReports, setAllReports] = useState<ReportSubmission[]>([]);
+  const [showAccountApproval, setShowAccountApproval] = useState(false);
   
   // Report form state
   const [reportForm, setReportForm] = useState<Partial<ReportSubmission>>({
@@ -433,15 +396,46 @@ function App() {
   });
 
   useEffect(() => {
-    const existingSession = readStoredSession();
-    if (existingSession) {
-      setSession(existingSession);
+    if (!isFirebaseConfigured || !auth) {
+      clearSession();
+      return;
     }
+
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        clearSession();
+        setSession(null);
+        return;
+      }
+
+      try {
+        const userEmail = user.email ?? '';
+        const isDocBinhKieuAdmin = userEmail.toLowerCase() === ADMIN_EMAIL;
+        const profile = await ensureAccountProfile(user.uid, userEmail, isDocBinhKieuAdmin);
+        if (profile.status !== 'approved') {
+          await firebaseLogout();
+          return;
+        }
+
+        const restoredSession: AuthSession = {
+          access_token: user.uid,
+          refresh_token: user.refreshToken,
+          user: { id: user.uid, email: userEmail, role: profile.role },
+        };
+        saveSession(restoredSession);
+        setSession(restoredSession);
+      } catch {
+        clearSession();
+        setSession(null);
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   useEffect(() => {
     const loadReports = async () => {
-      if (isFirebaseConfigured && session && !session.user.demo) {
+      if (isFirebaseConfigured && session) {
         try {
           const cloudReports = await fetchAllReportsFromFirestore();
           setAllReports(cloudReports);
@@ -547,7 +541,7 @@ function App() {
 
       let syncedToCloud = false;
       let cloudSyncError = '';
-      if (isFirebaseConfigured && session && !session.user.demo) {
+      if (isFirebaseConfigured && session) {
         try {
           await saveReportToFirestore(newReport);
           const cloudReports = await fetchAllReportsFromFirestore();
@@ -695,6 +689,9 @@ function App() {
       </aside>
 
       <main className="main-panel">
+        {showAccountApproval && session.user.role === 'admin' && (
+          <AccountApproval />
+        )}
         {view === 'personnel' ? (
           <PersonnelView
             totalPersonnel={TOTAL_PERSONNEL}
@@ -731,6 +728,11 @@ function App() {
               </div>
               <div className="top-actions">
                 <span className="user-pill">{session.user.role === 'admin' ? 'Quản trị' : 'Thành viên'} · {session.user.email}</span>
+                {session.user.role === 'admin' && (
+                  <button type="button" className="ghost-btn" onClick={() => setShowAccountApproval((current) => !current)}>
+                    {showAccountApproval ? 'Đóng duyệt tài khoản' : 'Duyệt tài khoản'}
+                  </button>
+                )}
                 <button type="button" className="ghost-btn" onClick={handleLogout}>Đăng xuất</button>
                 <button type="button" className="primary-btn small" onClick={openNewReport}>+ Thêm báo cáo</button>
               </div>
