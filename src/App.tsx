@@ -105,6 +105,7 @@ export type ReportSubmission = {
 
 const STORAGE_KEY = 'dbk-auth-session';
 const REPORTS_STORAGE_KEY = 'dbk-report-submissions';
+const ADMIN_EMAIL = 'nmtri.c3docbinhkieu@dongthap.edu.vn';
 
 const TOTAL_PERSONNEL = 120;
 
@@ -358,7 +359,7 @@ async function signInWithFirebase(email: string, password: string): Promise<Auth
 
   const user = await firebaseSignIn(email, password);
   const userEmail = user.email ?? email;
-  const isDocBinhKieuAdmin = userEmail.toLowerCase().includes('admin');
+  const isDocBinhKieuAdmin = userEmail.toLowerCase() === ADMIN_EMAIL;
   return {
     access_token: user.uid,
     refresh_token: user.refreshToken,
@@ -378,7 +379,7 @@ async function signUpWithFirebase(email: string, password: string): Promise<Auth
 
   const user = await firebaseSignUp(email, password);
   const userEmail = user.email ?? email;
-  const isDocBinhKieuAdmin = userEmail.toLowerCase().includes('admin');
+  const isDocBinhKieuAdmin = userEmail.toLowerCase() === ADMIN_EMAIL;
   return {
     access_token: user.uid,
     refresh_token: user.refreshToken,
