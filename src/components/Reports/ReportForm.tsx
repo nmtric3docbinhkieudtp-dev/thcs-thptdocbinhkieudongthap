@@ -482,7 +482,6 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                             onFormChange({ ...reportForm, prizeEntries: newList });
                           }}
                           placeholder="Cuộc thi / Phong trào..."
-                          required
                         />
                       </td>
                       <td>
@@ -570,7 +569,6 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                           onFormChange({ ...reportForm, classPositions: newList });
                         }}
                         placeholder="Tên chức danh..."
-                        required
                         className="font-semibold"
                       />
                     </td>
@@ -690,7 +688,6 @@ export function ReportForm({ reportForm, onFormChange, onSubmit, onCancel }: Rep
                           onFormChange({ ...reportForm, facilities: newList });
                         }}
                         placeholder="Tên thiết bị..."
-                        required
                         className="font-semibold"
                       />
                     </td>

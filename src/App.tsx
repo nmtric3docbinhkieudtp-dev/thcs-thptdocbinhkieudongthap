@@ -498,6 +498,11 @@ function App() {
     setAuthMode('login');
   };
 
+  const openNewReport = () => {
+    setReportMode('form');
+    setView('reports');
+  };
+
   const handleSubmitReport = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!reportForm.className || !reportForm.gcvnName) {
@@ -534,23 +539,29 @@ function App() {
     
     setIsSubmitting(true);
     try {
-      if (isFirebaseConfigured && (!session || !session.user.demo)) {
-        await saveReportToFirestore(newReport);
-      }
-      
-      // Backup to LocalStorage
+      // Lưu cục bộ trước để không mất báo cáo nếu Firestore lỗi hoặc chờ quá lâu.
       saveReport(newReport);
-      
-      // Update local state
-      if (isFirebaseConfigured && (!session || !session.user.demo)) {
-        const cloudReports = await fetchAllReportsFromFirestore();
-        setAllReports(cloudReports);
-      } else {
-        const localReports = readStoredReports();
-        setAllReports(localReports);
+
+      const localReports = readStoredReports();
+      setAllReports(localReports);
+
+      let syncedToCloud = false;
+      let cloudSyncError = '';
+      if (isFirebaseConfigured && session && !session.user.demo) {
+        try {
+          await saveReportToFirestore(newReport);
+          const cloudReports = await fetchAllReportsFromFirestore();
+          setAllReports(cloudReports);
+          syncedToCloud = true;
+        } catch (cloudError) {
+          console.error('Không thể đồng bộ báo cáo lên Firestore:', cloudError);
+          cloudSyncError = cloudError instanceof Error ? cloudError.message : String(cloudError);
+        }
       }
-      
-      alert('Báo cáo đã được gửi thành công lên hệ thống đám mây!');
+
+      alert(syncedToCloud
+        ? 'Báo cáo đã được gửi thành công lên hệ thống đám mây!'
+        : `Báo cáo đã được lưu trên trình duyệt. Chưa đồng bộ được lên hệ thống đám mây.${cloudSyncError ? `\nChi tiết: ${cloudSyncError}` : ''}`);
       setReportMode('select');
       setReportForm({
         id: '',
@@ -580,7 +591,7 @@ function App() {
       });
     } catch (err) {
       console.error(err);
-      alert('Không thể gửi báo cáo lên hệ thống. Vui lòng kiểm tra lại kết nối mạng hoặc cấu hình Firebase của bạn!');
+      alert('Không thể lưu báo cáo. Vui lòng kiểm tra lại dữ liệu và bộ nhớ trình duyệt.');
     } finally {
       setIsSubmitting(false);
     }
@@ -703,7 +714,13 @@ function App() {
             onFormChange={(updates) => setReportForm({...reportForm, ...updates})}
             onSubmitReport={handleSubmitReport}
             onExportJSON={exportReportsAsJSON}
-            onBackToOverview={() => setView('overview')}
+            onBack={() => {
+              if (reportMode === 'select') {
+                setView('overview');
+              } else {
+                setReportMode('select');
+              }
+            }}
           />
         ) : (
           <>
@@ -715,7 +732,7 @@ function App() {
               <div className="top-actions">
                 <span className="user-pill">{session.user.role === 'admin' ? 'Quản trị' : 'Thành viên'} · {session.user.email}</span>
                 <button type="button" className="ghost-btn" onClick={handleLogout}>Đăng xuất</button>
-                <button type="button" className="primary-btn small">+ Thêm báo cáo</button>
+                <button type="button" className="primary-btn small" onClick={openNewReport}>+ Thêm báo cáo</button>
               </div>
             </header>
 
@@ -891,7 +908,7 @@ function App() {
                 </div>
                 <div className="module-actions">
                   <button type="button" className="ghost-btn">Xuất file</button>
-                  <button type="button" className="primary-btn small">+ Tạo báo cáo</button>
+                  <button type="button" className="primary-btn small" onClick={openNewReport}>+ Tạo báo cáo</button>
                 </div>
               </div>
 

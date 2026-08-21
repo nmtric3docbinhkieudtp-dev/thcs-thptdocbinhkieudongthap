@@ -13,7 +13,7 @@ interface ReportPageProps {
   onFormChange: (updates: Partial<ReportSubmission>) => void;
   onSubmitReport: (e: FormEvent<HTMLFormElement>) => void;
   onExportJSON: () => void;
-  onBackToOverview: () => void;
+  onBack: () => void;
 }
 
 export function ReportPage({
@@ -25,8 +25,10 @@ export function ReportPage({
   onFormChange,
   onSubmitReport,
   onExportJSON,
-  onBackToOverview,
+  onBack,
 }: ReportPageProps) {
+  const backLabel = reportMode === 'select' ? 'Quay lại dashboard' : 'Quay lại chọn báo cáo';
+
   return (
     <section className="personnel-page panel">
       <div className="personnel-page-header">
@@ -34,7 +36,7 @@ export function ReportPage({
           <small>Báo cáo toàn trường</small>
           <h1>Biên bản tập trung học sinh đầu năm</h1>
         </div>
-        <button type="button" className="ghost-btn" onClick={onBackToOverview}>Quay lại dashboard</button>
+        <button type="button" className="ghost-btn" onClick={onBack}>{backLabel}</button>
       </div>
 
       {reportMode === 'select' && (
